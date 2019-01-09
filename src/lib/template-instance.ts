@@ -92,7 +92,7 @@ export class TemplateInstance {
         } else if (nodeIndex === part.index) {
           if (part.type === 'node') {
             const part = this.processor.handleTextExpression(this.options);
-            part.insertAfterNode(node.previousSibling!);
+            part.insertAfterNode(node);
             this._parts.push(part);
           } else {
             this._parts.push(...this.processor.handleAttributeExpressions(
@@ -111,7 +111,11 @@ export class TemplateInstance {
     _prepareInstance(fragment);
     if (isCEPolyfill) {
       document.adoptNode(fragment);
-      customElements.upgrade(fragment);
+      // TODO(b/111436067): remove this type
+      interface UpdatedCustomElementRegistry extends CustomElementRegistry {
+        upgrade(node: Node): void;
+      }
+      (customElements as UpdatedCustomElementRegistry).upgrade(fragment);
     }
     return fragment;
   }

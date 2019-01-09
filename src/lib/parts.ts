@@ -16,9 +16,12 @@
  * @module lit-html
  */
 
+import GOOG_LOG from 'goog:security.polymer_resin.configs.GOOG_LOG';
+import {makeSanitizeDomFunction} from 'goog:security.polymer_resin.sanitizer';
+
 import {isDirective} from './directive.js';
 import {removeNodes} from './dom.js';
-import {noChange, nothing, Part} from './part.js';
+import {noChange, Part} from './part.js';
 import {RenderOptions} from './render-options.js';
 import {TemplateInstance} from './template-instance.js';
 import {TemplateResult} from './template-result.js';
@@ -27,6 +30,47 @@ import {createMarker} from './template.js';
 export const isPrimitive = (value: any) =>
     (value === null ||
      !(typeof value === 'object' || typeof value === 'function'));
+
+/**
+ * A temporary fill-in until Typescript >3.0 has landed with the `unknown`
+ * type.
+ */
+export type Unknown = {}|null|undefined;
+
+/**
+ * A global callback used to sanitize any value before inserting it into the
+ * DOM.
+ *
+ * `value` is the value to sanitize.
+ * `name` is the name of an attribute or property (for example, href).
+ * `type` indicates where the value is being inserted: one of property,
+ * attribute, or text. `node` is the node where the value is being inserted.
+ */
+export type DomSanitizer =
+    (value: Unknown, name: string, type: ('property'|'attribute'|'text'),
+     node: Node) => Unknown;
+
+
+/**
+ * A global callback used to sanitize any value before inserting it into the
+ * DOM.
+ */
+let sanitizeDOMValue: DomSanitizer|undefined;
+
+/** Sets the global DOM sanitization callback. */
+export function setSanitizeDOMValue(newSanitizer: DomSanitizer) {
+  sanitizeDOMValue = newSanitizer;
+}
+
+// google3 internal section
+{
+  // Sets a default go/polymer-resin configuration.
+  // TODO(b/119056387): throw inside setSanitizeDOMValue if newSanitizer is
+  //     null or undefined.
+  setSanitizeDOMValue(
+      makeSanitizeDomFunction(GOOG_LOG, /* existing sanitizer */ undefined));
+}
+
 
 /**
  * Sets attribute values for AttributeParts, so that the value is only set once
@@ -84,7 +128,11 @@ export class AttributeCommitter {
   commit(): void {
     if (this.dirty) {
       this.dirty = false;
-      this.element.setAttribute(this.name, this._getValue());
+      let value = this._getValue();
+      if (sanitizeDOMValue) {
+        value = sanitizeDOMValue(value, this.name, 'attribute', this.element);
+      }
+      this.element.setAttribute(this.name, value);
     }
   }
 }
@@ -120,6 +168,10 @@ export class AttributePart implements Part {
     }
     this.committer.commit();
   }
+}
+
+function isTextNode(node: Node): node is Text {
+  return node.nodeType === Node.TEXT_NODE;
 }
 
 export class NodePart implements Part {
@@ -200,9 +252,6 @@ export class NodePart implements Part {
       this._commitNode(value);
     } else if (Array.isArray(value) || value[Symbol.iterator]) {
       this._commitIterable(value);
-    } else if (value === nothing) {
-      this.value = nothing;
-      this.clear();
     } else {
       // Fallback, will render the string representation
       this._commitText(value);
@@ -225,15 +274,26 @@ export class NodePart implements Part {
   private _commitText(value: string): void {
     const node = this.startNode.nextSibling!;
     value = value == null ? '' : value;
-    if (node === this.endNode.previousSibling &&
-        node.nodeType === 3 /* Node.TEXT_NODE */) {
+    if (node === this.endNode.previousSibling && isTextNode(node)) {
       // If we only have a single text node between the markers, we can just
       // set its value, rather than replacing it.
       // TODO(justinfagnani): Can we just check if this.value is primitive?
-      (node as Text).data = value;
+      if (sanitizeDOMValue) {
+        value = String(sanitizeDOMValue(value, 'data', 'property', node));
+      }
+      node.data = value;
     } else {
-      this._commitNode(document.createTextNode(
-          typeof value === 'string' ? value : String(value)));
+      // When setting text content, for security purposes it matters a lot what
+      // the parent is. For example, <style> and <script> need to be handled
+      // with care, while <span> does not. So first we need to put a text node
+      // into the document, then we can sanitize its contentx.
+      const textNode = document.createTextNode('');
+      this._commitNode(textNode);
+      if (sanitizeDOMValue) {
+        value = String(
+            sanitizeDOMValue(value, 'textContent', 'property', textNode));
+      }
+      textNode.data = value;
     }
     this.value = value;
   }
@@ -392,7 +452,11 @@ export class PropertyCommitter extends AttributeCommitter {
   commit(): void {
     if (this.dirty) {
       this.dirty = false;
-      (this.element as any)[this.name] = this._getValue();
+      let value = this._getValue();
+      if (sanitizeDOMValue) {
+        value = sanitizeDOMValue(value, this.name, 'property', this.element);
+      }
+      (this.element as any)[this.name] = value;
     }
   }
 }
