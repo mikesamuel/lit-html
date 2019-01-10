@@ -16,8 +16,8 @@
  * @module lit-html
  */
 
-import GOOG_LOG from 'goog:security.polymer_resin.configs.GOOG_LOG';
-import {makeSanitizeDomFunction} from 'goog:security.polymer_resin.sanitizer';
+import sanitizerConfig from './goog/security/polymer_resin/configs/logsalot';
+import {makeSanitizeDomFunction} from './goog/security/polymer_resin/sanitizer';
 
 import {isDirective} from './directive.js';
 import {removeNodes} from './dom.js';
@@ -62,13 +62,12 @@ export function setSanitizeDOMValue(newSanitizer: DomSanitizer) {
   sanitizeDOMValue = newSanitizer;
 }
 
-// google3 internal section
 {
   // Sets a default go/polymer-resin configuration.
   // TODO(b/119056387): throw inside setSanitizeDOMValue if newSanitizer is
   //     null or undefined.
   setSanitizeDOMValue(
-      makeSanitizeDomFunction(GOOG_LOG, /* existing sanitizer */ undefined));
+      makeSanitizeDomFunction(sanitizerConfig, /* existing sanitizer */ undefined));
 }
 
 

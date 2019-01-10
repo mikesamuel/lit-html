@@ -12,8 +12,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as safeDom from 'goog:goog.dom.safe';
-import SafeHtml from 'goog:goog.html.SafeHtml';
+import * as safeDom from '../lib/goog/dom/safe';
+import {SafeHtml} from '../lib/goog/html/safehtml';
 
 import {directive, NodePart, Part} from '../lit-html.js';
 
