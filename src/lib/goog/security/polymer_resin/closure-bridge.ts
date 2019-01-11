@@ -167,19 +167,19 @@ const FILTERS_: { [key: string]: filter } = {
  * @return {?}
  */
 export function safeTypesBridge(value: any, type: SafeTypeT, fallback: any): any {
-      /** @type {!security.polymer_resin.closure_bridge.unwrapper} */
-      const unwrapper: Unwrapper = UNWRAPPERS_[type];
-      if (value instanceof unwrapper.typeToUnwrap) {
-        const uw = unwrapper.unwrap(value, fallback);
-        if (uw !== fallback) {
-          return uw;
-        }
-      }
-
-      /** @type {!security.polymer_resin.closure_bridge.filter} */
-      const filter = FILTERS_[type];
-      return filter(
-          coerceToString(unwrapString_(value)),
-          fallback);
+  /** @type {!security.polymer_resin.closure_bridge.unwrapper} */
+  const unwrapper: Unwrapper = UNWRAPPERS_[type];
+  if (value instanceof unwrapper.typeToUnwrap) {
+    const uw = unwrapper.unwrap(value, fallback);
+    if (uw !== fallback) {
+      return uw;
     }
+  }
+
+  /** @type {!security.polymer_resin.closure_bridge.filter} */
+  const filter = FILTERS_[type];
+  return filter(
+      coerceToString(unwrapString_(value)),
+      fallback);
+}
 
