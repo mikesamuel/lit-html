@@ -578,7 +578,7 @@ export function makeSanitizer(config: Configuration): Sanitizer {
     if (attrType != null) {
       /** @type {!security.polymer_resin.ValueHandler} */
       const valueHandler = valueHandlers[attrType];
-      const safeType : SafeTypeT|null = valueHandler.safeType;
+      const safeType: SafeTypeT|null = valueHandler.safeType;
       safeReplacement = valueHandler.safeReplacement;
 
       if (safeType) {
