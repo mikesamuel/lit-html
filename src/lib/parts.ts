@@ -101,12 +101,26 @@ export class AttributeCommitter {
 
   protected _getValue(): any {
     const strings = this.strings;
+    const parts = this.parts;
     const l = strings.length - 1;
+
+    if (l === 1 && strings[0] === '' && parts[0]) {
+      const v = parts[0].value;
+      if (v != null &&
+          (Array.isArray(v) || typeof v !== 'string' && v[Symbol.iterator])) {
+        if (v.length === 1) {
+          return v[0];
+        }
+      } else {
+        return v;
+      }
+    }
+
     let text = '';
 
     for (let i = 0; i < l; i++) {
       text += strings[i];
-      const part = this.parts[i];
+      const part = parts[i];
       if (part !== undefined) {
         const v = part.value;
         if (v != null &&
@@ -131,7 +145,7 @@ export class AttributeCommitter {
       if (sanitizeDOMValue) {
         value = sanitizeDOMValue(value, this.name, 'attribute', this.element);
       }
-      this.element.setAttribute(this.name, value);
+      this.element.setAttribute(this.name, String(value));
     }
   }
 }
