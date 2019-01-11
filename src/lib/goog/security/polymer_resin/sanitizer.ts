@@ -507,9 +507,7 @@ export function makeSanitizer(config: Configuration): Sanitizer {
           }
         }
         if (allowText) {
-          return '' +
-              safeTypesBridge(
-                     value, SafeType.STRING, value);
+          return '' + safeTypesBridge(value, SafeType.STRING, value);
         }
       }
 
@@ -580,11 +578,11 @@ export function makeSanitizer(config: Configuration): Sanitizer {
     if (attrType != null) {
       /** @type {!security.polymer_resin.ValueHandler} */
       const valueHandler = valueHandlers[attrType];
-      const safeType = valueHandler.safeType;
+      const safeType : SafeTypeT|null = valueHandler.safeType;
       safeReplacement = valueHandler.safeReplacement;
 
       if (safeType) {
-        safeValue = safeTypesBridge(value, safeType, DID_NOT_UNWRAP);
+        safeValue = safeTypesBridge(value, (<SafeTypeT>safeType), DID_NOT_UNWRAP);
       }
       if (safeValue === DID_NOT_UNWRAP && valueHandler.filter) {
         // Treat as a special case.

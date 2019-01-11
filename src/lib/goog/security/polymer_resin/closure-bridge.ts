@@ -28,7 +28,9 @@ import { TrustedResourceUrl } from '../../html/trustedresourceurl';
 import { htmlEscape } from '../../string/string';
 import { Const } from '../../string/const';
 import { TypedString } from '../../string/typedstring';
+import { SafeTypeT } from './sanitizer';
 
+const coerceToString = String;
 
 /**
  * @typedef {{typeToUnwrap: !Function, unwrap: !Function}}
@@ -164,7 +166,7 @@ const FILTERS_: { [key: string]: filter } = {
  * @param {*} fallback the value to return if value is not trusted as a value of type.
  * @return {?}
  */
-export function safeTypesBridge(value: any, type: string, fallback: any): any {
+export function safeTypesBridge(value: any, type: SafeTypeT, fallback: any): any {
       /** @type {!security.polymer_resin.closure_bridge.unwrapper} */
       const unwrapper: Unwrapper = UNWRAPPERS_[type];
       if (value instanceof unwrapper.typeToUnwrap) {
@@ -177,7 +179,7 @@ export function safeTypesBridge(value: any, type: string, fallback: any): any {
       /** @type {!security.polymer_resin.closure_bridge.filter} */
       const filter = FILTERS_[type];
       return filter(
-          '' + unwrapString_(value),
+          coerceToString(unwrapString_(value)),
           fallback);
     }
 
