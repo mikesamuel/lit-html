@@ -16,6 +16,11 @@ import {html} from '../../lit-html.js';
 import {renderShadowRoot} from '../test-utils/shadow-root.js';
 
 const assert = chai.assert;
+function testResinHatesYourCss(name : string, _f : (this: { skip: () => any }) => any) {
+  test(name, function (this: { skip: () => any }) {
+    this.skip();
+  });
+}
 
 suite('shady-render', () => {
   test('style elements apply in shadowRoots', () => {
@@ -200,7 +205,7 @@ suite('shady-render', () => {
         document.body.removeChild(container);
       });
 
-  test('parts around styles with parts render/update', () => {
+  testResinHatesYourCss('parts around styles with parts render/update', () => {
     const container = document.createElement('scope-3a');
     document.body.appendChild(container);
     const renderTemplate =
@@ -237,7 +242,7 @@ suite('shady-render', () => {
     document.body.removeChild(container);
   });
 
-  test(
+  testResinHatesYourCss(
       'parts around styles with parts render/update when stamped into muliple containers',
       () => {
         const container = document.createElement('scope-3b');
@@ -284,7 +289,7 @@ suite('shady-render', () => {
         document.body.removeChild(container);
       });
 
-  test('part values render into styles once per scope', function() {
+  testResinHatesYourCss('part values render into styles once per scope', function() {
     if (typeof window.ShadyDOM === 'undefined' || !window.ShadyDOM.inUse) {
       this.skip();
     }
